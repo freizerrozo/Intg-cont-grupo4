@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskflow_api
+    ports:
+      - "5001:5000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=taskflow
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - taskflow_network
+  db:
+    image: postgres:15
+    container_name: taskflow_db
+    environment:
+      - POSTGRES_DB=taskflow
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taskflow_network
+networks:
+  taskflow_network:
+    driver: bridge
+volumes:
+  postgres_data:
